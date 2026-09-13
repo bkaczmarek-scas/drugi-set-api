@@ -35,3 +35,6 @@ Thumbs.db
 # NuGet
 *.nupkg
 project.lock.json
+
+# Superpowers subagent-driven-development scratch (ledgers, briefs, review packages)
+.superpowers/

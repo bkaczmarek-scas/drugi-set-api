@@ -1,6 +1,7 @@
 using System.Text;
 using DrugiSet.Api.Auth;
 using DrugiSet.Api.Data;
+using DrugiSet.Api.Seed;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
@@ -53,5 +54,10 @@ app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapGet("/health", () => Results.Ok(new { status = "Healthy" }));
+
+using (var scope = app.Services.CreateScope())
+{
+    await TestAccountSeeder.SeedAsync(scope.ServiceProvider);
+}
 
 app.Run();

@@ -1,7 +1,7 @@
 # Drugi Set API — scaffold + auth foundation + test accounts
 
 Date: 2026-09-13
-Status: Approved by user, pending implementation plan
+Status: Approved by user; revised 2026-09-13 to single-environment scope (see "Database / Neon"); implementation plan written
 
 ## Context
 
@@ -22,8 +22,8 @@ Seeded accounts are only useful if there's a way to actually authenticate with t
 - ASP.NET Core Identity (`ApplicationUser`, two roles: `Admin`, `Zawodnik`)
 - JWT bearer authentication
 - `POST /api/auth/login`, `GET /api/auth/me` (protected), `GET /health`
-- Idempotent startup seeder that creates the two test accounts (disabled in `Production`)
-- EF Core initial migration applied to the Neon **staging** branch
+- Idempotent startup seeder that creates the two test accounts on every boot
+- EF Core initial migration applied to the Neon **`production`** branch (single environment for now — see "Database / Neon")
 - Unit test for the seeder (EF Core InMemory provider), written before the implementation (TDD)
 - Manual end-to-end verification (build, migrate, run, login, `/me`, DB check via Neon MCP)
 - `feature/api-scaffold-auth-seed` branch off `dev`, pushed, PR opened against `dev`
@@ -144,7 +144,7 @@ Unauthenticated, returns 200 with a trivial body (`{ "status": "Healthy" }`). Ch
 
 ## Seeder
 
-`TestAccountSeeder.SeedAsync(IServiceProvider services)`, called from `Program.cs` after `app.Build()` and before `app.Run()`, gated by `if (!app.Environment.IsProduction())`.
+`TestAccountSeeder.SeedAsync(IServiceProvider services)`, called unconditionally from `Program.cs` after `app.Build()` and before `app.Run()` — no environment gate for now. A `Production`/`Development` split only earns its keep once there's a real production environment with real user data to protect; right now there's exactly one environment and no users, so gating would just stop the seeder from ever running against the one database that exists. Revisit this (re-add the gate, or remove the seeder entirely) once a real staging/production split exists — see "Follow-ups".
 
 Behavior:
 1. Ensure roles `Admin` and `Zawodnik` exist (`RoleManager.RoleExistsAsync` / `CreateAsync`)
@@ -156,9 +156,13 @@ This is intentionally a startup hook, not a one-off script, per the user's state
 
 ## Database / Neon
 
-- Target: Neon project `drugi-set` (`lingering-frost-42394754`), branch **`staging`** (`br-snowy-silence-b2eaf5zi`). The `production` branch is left untouched — no schema, no seeded accounts.
-- Connection string obtained via the Neon MCP (`get_connection_string`, `branch_id` = staging) and stored locally with `dotnet user-secrets set "ConnectionStrings:DefaultConnection" "<value>"` — never written to a committed file (already covered by the existing `.gitignore` entries for `appsettings.Development.json` / `appsettings.*.local.json`, but user-secrets avoids the issue entirely by living outside the repo).
-- Migration: `dotnet ef migrations add InitialIdentitySchema`, then `dotnet ef database update` against the staging connection string. This creates the standard Identity tables (`AspNetUsers`, `AspNetRoles`, `AspNetUserRoles`, etc.).
+**Single environment for now.** The platform has no real users yet and is still being built, so maintaining separate staging/production Neon branches — and propagating every change through both — is overhead with no current upside. Target the Neon **`production`** branch directly; it's already the default branch on the `drugi-set` project, so this needs no new Neon setup. The `staging` branch (`br-snowy-silence-b2eaf5zi`) that already exists is left alone (not deleted, just unused) in case a real split is wanted later.
+
+- Target: Neon project `drugi-set` (`lingering-frost-42394754`), branch **`production`** (`br-mute-frost-b2iighrm`)
+- Connection string obtained via the Neon MCP (`get_connection_string`, default/production branch) and stored locally with `dotnet user-secrets set "ConnectionStrings:DefaultConnection" "<value>"` — never written to a committed file (already covered by the existing `.gitignore` entries for `appsettings.Development.json` / `appsettings.*.local.json`, but user-secrets avoids the issue entirely by living outside the repo).
+- Migration: `dotnet ef migrations add InitialIdentitySchema`, then `dotnet ef database update` against the production connection string. This creates the standard Identity tables (`AspNetUsers`, `AspNetRoles`, `AspNetUserRoles`, etc.).
+
+**Before this platform has real users or a real registration flow**, this must be revisited: introduce an actual staging/production split (or at least re-gate the seeder) so weak test-account passwords and startup seeding never touch a database holding real people's data. Tracked in "Follow-ups".
 
 ## Error handling
 
@@ -174,9 +178,9 @@ This is intentionally a startup hook, not a one-off script, per the user's state
    - The stored password verifies via `UserManager.CheckPasswordAsync` for the plaintext passwords `admin` / `zawodnik`
    Watch it fail (no seeder exists yet), then implement `TestAccountSeeder` to make it pass.
 2. `dotnet build` succeeds.
-3. `dotnet ef database update` against the Neon staging connection string succeeds.
+3. `dotnet ef database update` against the Neon production connection string succeeds.
 4. `dotnet run` locally (`ASPNETCORE_ENVIRONMENT=Development`) — seeder log lines confirm both accounts created.
-5. Verify via Neon MCP `run_sql` against the staging branch: `AspNetUsers` has 2 rows with the expected emails; `AspNetUserRoles` joins to the expected role names.
+5. Verify via Neon MCP `run_sql` against the production branch: `AspNetUsers` has 2 rows with the expected emails; `AspNetUserRoles` joins to the expected role names.
 6. `curl POST /api/auth/login` for both accounts → 200 + token; a deliberately wrong password → 401.
 7. `curl GET /api/auth/me` with each token → correct `id`/`email`/`role`.
 8. `curl GET /health` → 200.
@@ -191,6 +195,7 @@ This is intentionally a startup hook, not a one-off script, per the user's state
 ## Follow-ups (not this task)
 
 - Tighten the password policy before the real registration endpoint ships
+- Introduce a real staging/production Neon split (and re-gate or remove the seeder) before this platform has real users or a real registration flow
 - Wire `drugi-set-web`'s `AuthPage.tsx` to `POST /api/auth/login` once this is reviewed
 - Configure `Jwt__Secret` / `ConnectionStrings__DefaultConnection` / `Cors__AllowedOrigins` on Railway when the API is actually deployed there
 - Build registration, password reset, and Resend email integration

@@ -1,0 +1,22 @@
+@DrugiSet.Api_HostAddress = http://localhost:5080
+
+GET {{DrugiSet.Api_HostAddress}}/health
+Accept: application/json
+
+###
+
+POST {{DrugiSet.Api_HostAddress}}/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "admin@drugiset.pl",
+  "password": "admin"
+}
+
+###
+
+# Wklej token z pola "token" odpowiedzi powyższego żądania logowania w miejsce <TOKEN>
+GET {{DrugiSet.Api_HostAddress}}/api/auth/me
+Authorization: Bearer <TOKEN>
+
+###

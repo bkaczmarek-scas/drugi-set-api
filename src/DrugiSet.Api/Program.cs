@@ -26,8 +26,11 @@ builder.Services.AddIdentityCore<ApplicationUser>(options =>
     .AddEntityFrameworkStores<AppDbContext>()
     .AddSignInManager();
 
-var jwtSecret = builder.Configuration["Jwt:Secret"]
-    ?? throw new InvalidOperationException("Konfiguracja 'Jwt:Secret' jest wymagana.");
+var jwtSecret = builder.Configuration["Jwt:Secret"];
+if (string.IsNullOrWhiteSpace(jwtSecret) || Encoding.UTF8.GetByteCount(jwtSecret) < 32)
+{
+    throw new InvalidOperationException("Konfiguracja 'Jwt:Secret' jest wymagana i musi mieć co najmniej 32 bajty.");
+}
 
 builder.Services.AddSingleton<JwtTokenService>();
 
@@ -54,6 +57,8 @@ builder.Services.AddAuthorization();
 builder.Services.AddProblemDetails();
 
 var app = builder.Build();
+
+app.UseExceptionHandler();
 
 app.UseAuthentication();
 app.UseAuthorization();

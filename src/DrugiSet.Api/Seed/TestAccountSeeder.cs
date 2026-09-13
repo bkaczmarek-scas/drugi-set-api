@@ -8,7 +8,7 @@ using Microsoft.Extensions.Logging;
 
 namespace DrugiSet.Api.Seed;
 
-public static class TestAccountSeeder
+public class TestAccountSeeder
 {
     public static readonly (string Email, string Password, string Role)[] Accounts =
     {
@@ -20,7 +20,7 @@ public static class TestAccountSeeder
     {
         var roleManager = services.GetRequiredService<RoleManager<IdentityRole<Guid>>>();
         var userManager = services.GetRequiredService<UserManager<ApplicationUser>>();
-        var logger = services.GetRequiredService<ILogger<AppDbContext>>();
+        var logger = services.GetRequiredService<ILogger<TestAccountSeeder>>();
 
         foreach (var role in Accounts.Select(a => a.Role).Distinct())
         {

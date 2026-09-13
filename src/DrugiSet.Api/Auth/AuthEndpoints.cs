@@ -17,6 +17,11 @@ public static class AuthEndpoints
             UserManager<ApplicationUser> userManager,
             JwtTokenService jwtTokenService) =>
         {
+            if (string.IsNullOrWhiteSpace(request.Email) || string.IsNullOrWhiteSpace(request.Password))
+            {
+                return Results.Problem(title: "Nieprawidłowy e-mail lub hasło.", statusCode: StatusCodes.Status401Unauthorized);
+            }
+
             var user = await userManager.FindByEmailAsync(request.Email);
             if (user is null)
             {

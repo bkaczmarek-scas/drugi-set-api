@@ -13,8 +13,13 @@ public class JwtTokenService
 
     public JwtTokenService(IConfiguration configuration)
     {
-        _secret = configuration["Jwt:Secret"]
-            ?? throw new InvalidOperationException("Konfiguracja 'Jwt:Secret' jest wymagana.");
+        var secret = configuration["Jwt:Secret"];
+        if (string.IsNullOrWhiteSpace(secret) || Encoding.UTF8.GetByteCount(secret) < 32)
+        {
+            throw new InvalidOperationException("Konfiguracja 'Jwt:Secret' jest wymagana i musi mieć co najmniej 32 bajty.");
+        }
+
+        _secret = secret;
     }
 
     public (string Token, DateTime ExpiresAtUtc) CreateToken(Guid userId, string email, string role)

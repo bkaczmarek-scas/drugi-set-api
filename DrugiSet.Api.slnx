@@ -1,0 +1,8 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/DrugiSet.Api/DrugiSet.Api.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/DrugiSet.Api.Tests/DrugiSet.Api.Tests.csproj" />
+  </Folder>
+</Solution>

@@ -564,12 +564,14 @@ dotnet user-secrets set "Jwt:Secret" "<output of the command above>" --project s
 
 ```bash
 dotnet build
-ASPNETCORE_URLS="http://localhost:5080" dotnet run --project src/DrugiSet.Api > /tmp/api.log 2>&1 &
+ASPNETCORE_ENVIRONMENT=Development ASPNETCORE_URLS="http://localhost:5080" dotnet run --project src/DrugiSet.Api --no-launch-profile > /tmp/api.log 2>&1 &
 API_PID=$!
 sleep 5
 curl -s http://localhost:5080/health
 kill $API_PID
 ```
+
+`ASPNETCORE_ENVIRONMENT=Development` is required here (not just cosmetic): ASP.NET Core only loads user-secrets when the environment is `Development`, and from this task onward `Jwt:Secret` must come from user-secrets — without it, `Jwt:Secret` resolves to the empty placeholder in `appsettings.json`, and `SymmetricSecurityKey` throws on the first request (the JWT bearer handler runs for every request once `UseAuthentication()` is in the pipeline, even for endpoints that don't require authorization), so `/health` would 500 instead of returning 200.
 
 Expected: `Build succeeded.`, then `{"status":"Healthy"}` (an unauthenticated endpoint stays reachable after adding auth middleware).
 

@@ -507,6 +507,10 @@ builder.Services.AddSingleton<JwtTokenService>();
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
     {
+        // Bez tego ASP.NET Core mapuje standardowe krótkie nazwy claimów JWT ("sub", "email")
+        // na przestarzałe długie URI (ClaimTypes.NameIdentifier / ClaimTypes.Email), przez co
+        // AuthEndpoints.MapAuthEndpoints (który czyta JwtRegisteredClaimNames.Sub/.Email) dostaje null.
+        options.MapInboundClaims = false;
         options.TokenValidationParameters = new TokenValidationParameters
         {
             ValidateIssuer = true,
@@ -797,6 +801,10 @@ builder.Services.AddSingleton<JwtTokenService>();
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
     {
+        // Bez tego ASP.NET Core mapuje standardowe krótkie nazwy claimów JWT ("sub", "email")
+        // na przestarzałe długie URI (ClaimTypes.NameIdentifier / ClaimTypes.Email), przez co
+        // AuthEndpoints.MapAuthEndpoints (który czyta JwtRegisteredClaimNames.Sub/.Email) dostaje null.
+        options.MapInboundClaims = false;
         options.TokenValidationParameters = new TokenValidationParameters
         {
             ValidateIssuer = true,
@@ -974,6 +982,10 @@ builder.Services.AddSingleton<JwtTokenService>();
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
     {
+        // Bez tego ASP.NET Core mapuje standardowe krótkie nazwy claimów JWT ("sub", "email")
+        // na przestarzałe długie URI (ClaimTypes.NameIdentifier / ClaimTypes.Email), przez co
+        // AuthEndpoints.MapAuthEndpoints (który czyta JwtRegisteredClaimNames.Sub/.Email) dostaje null.
+        options.MapInboundClaims = false;
         options.TokenValidationParameters = new TokenValidationParameters
         {
             ValidateIssuer = true,

@@ -1,0 +1,6 @@
+@DrugiSet.Api_HostAddress = http://localhost:0
+
+GET {{DrugiSet.Api_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###

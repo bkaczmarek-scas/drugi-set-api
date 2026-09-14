@@ -29,7 +29,7 @@ Powiązane repozytoria (bkaczmarek-scas):
 - **drugi-set-web** — aplikacja webowa dla zawodników (rejestracja, profile).
 - **drugi-set-api** (to repo) — backend ASP.NET Core Web API.
 
-Każda decyzja architektoniczna i status wdrożenia są opisane w Asanie — sprawdź tam przed podjęciem nietrywialnych decyzji technicznych, i dopisuj tam ważne zmiany, żeby drugi agent (i człowiek) wiedzieli, co się zmieniło.
+Każda decyzja architektoniczna i status wdrożenia są opisane w Asanie — sprawdź tam przed podjęciem nietrywialnych decyzji technicznych. **Żaden agent AI nie dodaje, nie opisuje ani nie aktualizuje zadań (tasków) w Asanie** — jedyna dopuszczalna zmiana w Asanie to aktualizacja zakładki **Przegląd**, i tylko wtedy, gdy zmiana ma charakter architektoniczny.
 
 ## Stack tego repozytorium
 
@@ -46,4 +46,4 @@ ASP.NET Core Web API (.NET) + Entity Framework Core + PostgreSQL (Neon). Build: 
 
 1. Sprawdź, że kod się buduje (`dotnet build`), a migracje EF Core działają (`dotnet ef database update` na bazie dev/staging).
 2. Zaktualizuj README, jeśli zmiana tego wymaga (w tym listę wymaganych zmiennych środowiskowych).
-3. Zaktualizuj odpowiednie zadanie w Asanie (status + ewentualnie zakładka Przegląd, jeśli to ważna decyzja techniczna).
+3. Nie aktualizuj zadań w Asanie. Jeśli zmiana ma charakter architektoniczny, zaktualizuj wyłącznie zakładkę Przegląd (patrz sekcja „Kontekst projektu").

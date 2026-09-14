@@ -37,8 +37,11 @@ ASP.NET Core Web API (.NET) + Entity Framework Core + PostgreSQL (Neon). Build: 
 
 ## Konwencje git
 
-- `main` = produkcja (Railway deployuje z tego brancha), `dev` = integracja, nowa praca na `feature/*` odgałęzionym od `dev`.
-- PR-y kieruj do `dev` (nie do `main`), z wypełnionym szablonem (`.github/PULL_REQUEST_TEMPLATE.md`).
+**Tymczasowo, do odwołania (od 2026-09-14): pomijamy `dev`.** Pracujemy wyłącznie na `main` i pushujemy zmiany bezpośrednio tam — `main` to produkcja, więc każdy push realnie wdraża. Nie zakładaj branchy `feature/*` ani PR-ów do `dev` — `dev` rozjechał się z `main` i na razie nie jest aktualizowany. Ta notatka zniknie, gdy wrócimy do zwykłego flow.
+
+- Commituj małymi krokami i pushuj często bezpośrednio na `main`.
+- Zanim zaczniesz i zanim zapushujesz: `git fetch origin` + `git pull --rebase origin main` (patrz sekcja 0) — przy pracy wprost na `main` ryzyko kolizji z drugim agentem jest wyższe niż przy osobnych branchach.
+- Jeśli pull/rebase zgłosi konflikt — zatrzymaj się i rozwiąż go świadomie, nigdy `--force push`.
 - Commity: krótki, konkretny opis po polsku (np. „Dodaj endpoint rejestracji gracza").
 - Nie commituj `.env`, `appsettings.Development.json`, sekretów ani wygenerowanych plików (`bin`, `obj`) — patrz `.gitignore`.
 

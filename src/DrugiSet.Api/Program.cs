@@ -1,10 +1,13 @@
 using System.Text;
 using DrugiSet.Api.Auth;
 using DrugiSet.Api.Data;
+using DrugiSet.Api.Posts;
 using DrugiSet.Api.Seed;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.FileProviders;
 using Microsoft.IdentityModel.Tokens;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -33,6 +36,8 @@ if (string.IsNullOrWhiteSpace(jwtSecret) || Encoding.UTF8.GetByteCount(jwtSecret
 }
 
 builder.Services.AddSingleton<JwtTokenService>();
+builder.Services.AddScoped<PostsService>();
+builder.Services.AddSingleton<ImageUploadService>();
 
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
@@ -72,6 +77,24 @@ builder.Services.AddCors(options =>
 
 var app = builder.Build();
 
+app.UseForwardedHeaders(new ForwardedHeadersOptions
+{
+    ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto,
+});
+
+var uploadsPath = builder.Configuration["Uploads:Path"];
+if (string.IsNullOrWhiteSpace(uploadsPath))
+{
+    throw new InvalidOperationException("Konfiguracja 'Uploads:Path' jest wymagana.");
+}
+uploadsPath = Path.GetFullPath(uploadsPath);
+Directory.CreateDirectory(uploadsPath);
+app.UseStaticFiles(new StaticFileOptions
+{
+    FileProvider = new PhysicalFileProvider(uploadsPath),
+    RequestPath = "/uploads",
+});
+
 app.UseExceptionHandler();
 
 app.UseCors("Frontend");
@@ -81,6 +104,7 @@ app.UseAuthorization();
 
 app.MapGet("/health", () => Results.Ok(new { status = "Healthy" }));
 app.MapAuthEndpoints();
+app.MapPostsEndpoints();
 
 using (var scope = app.Services.CreateScope())
 {

@@ -32,6 +32,7 @@ Serwer nie czyta wartości z repo — poniższe zmienne trzeba ustawić w środo
 | `ASPNETCORE_ENVIRONMENT` | `Development` / `Production` |
 | `Jwt__Secret` | Sekret do podpisywania tokenów uwierzytelniania (gdy zostanie dodane) |
 | `Cors__AllowedOrigins` | Dozwolone originy dla CORS (adresy drugi-set-www i drugi-set-web) |
+| `Uploads__Path` | Ścieżka na dysku (Railway Volume) do zapisu przesłanych zdjęć |
 
 Lista będzie uzupełniana w miarę rozwoju API.
 
@@ -53,3 +54,14 @@ Aplikacja i baza działają na ten moment w jednym środowisku (branch `producti
 - `POST /api/auth/login` — `{ "email": string, "password": string }` → `{ "token", "expiresAtUtc", "email", "role" }` (401 przy błędnych danych)
 - `GET /api/auth/me` — wymaga `Authorization: Bearer <token>` → `{ "id", "email", "role" }`
 - `GET /health` — healthcheck
+- `GET /api/posts` — lista opublikowanych aktualności → `[{ "id", "title", "slug", "coverImageUrl", "createdAt" }]`
+- `GET /api/posts/{slug}` — szczegóły aktualności → `{ "id", "title", "slug", "contentHtml", "coverImageUrl", "createdAt", "updatedAt" }` (404 gdy brak)
+
+Poniższe endpointy administracyjne wymagają `Authorization: Bearer <token>` z rolą Admin:
+
+- `GET /api/admin/posts` — lista wszystkich aktualności → `[{ "id", "title", "slug", "coverImageUrl", "createdAt" }]`
+- `GET /api/admin/posts/{id}` — szczegóły aktualności → `{ "id", "title", "slug", "contentHtml", "coverImageUrl", "createdAt", "updatedAt" }` (404 gdy brak)
+- `POST /api/admin/posts` — `{ "title", "contentHtml", "coverImageUrl" }` → 201 z pełnym wpisem (400 gdy brak tytułu lub treści)
+- `PUT /api/admin/posts/{id}` — jw. → 200 z pełnym wpisem (400 gdy brak tytułu lub treści, 404 gdy brak wpisu)
+- `DELETE /api/admin/posts/{id}` — 204 (404 gdy brak wpisu)
+- `POST /api/admin/posts/images` — multipart/form-data, pole `file` → `{ "url" }` (400 gdy plik pusty, większy niż 5 MB, lub nieobsługiwany typ — dozwolone JPEG/PNG/WebP; obraz jest zapisywany jako WebP; obrazy szersze niż 1600px są dodatkowo skalowane z zachowaniem proporcji)

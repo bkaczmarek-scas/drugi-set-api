@@ -28,6 +28,9 @@ appsettings.*.local.json
 *.db-shm
 *.db-wal
 
+# Local uploaded images (dev)
+uploads-dev/
+
 # OS
 .DS_Store
 Thumbs.db

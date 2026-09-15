@@ -20,3 +20,31 @@ GET {{DrugiSet.Api_HostAddress}}/api/auth/me
 Authorization: Bearer <TOKEN>
 
 ###
+
+# Zaloguj się jako admin@drugiset.pl/admin (patrz żądanie logowania powyżej),
+# wklej token w miejsce <TOKEN> w żądaniach poniżej.
+
+GET {{DrugiSet.Api_HostAddress}}/api/admin/posts
+Authorization: Bearer <TOKEN>
+
+###
+
+POST {{DrugiSet.Api_HostAddress}}/api/admin/posts
+Authorization: Bearer <TOKEN>
+Content-Type: application/json
+
+{
+  "title": "Testowa aktualność",
+  "contentHtml": "<p>Treść testowa</p>",
+  "coverImageUrl": null
+}
+
+###
+
+GET {{DrugiSet.Api_HostAddress}}/api/posts
+
+###
+
+# Upload obrazu — w VS Code REST Client zaznacz plik przez pole "Attach File"
+# albo przetestuj przez curl:
+# curl -X POST {{DrugiSet.Api_HostAddress}}/api/admin/posts/images -H "Authorization: Bearer <TOKEN>" -F "file=@/sciezka/do/zdjecia.jpg"

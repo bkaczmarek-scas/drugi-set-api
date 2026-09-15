@@ -1,6 +1,7 @@
 using System.Text;
 using DrugiSet.Api.Auth;
 using DrugiSet.Api.Data;
+using DrugiSet.Api.Posts;
 using DrugiSet.Api.Seed;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
@@ -33,6 +34,7 @@ if (string.IsNullOrWhiteSpace(jwtSecret) || Encoding.UTF8.GetByteCount(jwtSecret
 }
 
 builder.Services.AddSingleton<JwtTokenService>();
+builder.Services.AddScoped<PostsService>();
 
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
@@ -81,6 +83,7 @@ app.UseAuthorization();
 
 app.MapGet("/health", () => Results.Ok(new { status = "Healthy" }));
 app.MapAuthEndpoints();
+app.MapPostsEndpoints();
 
 using (var scope = app.Services.CreateScope())
 {

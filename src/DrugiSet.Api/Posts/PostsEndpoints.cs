@@ -10,13 +10,13 @@ public static class PostsEndpoints
         app.MapGet("/api/posts/{slug}", GetPostBySlug);
     }
 
-    public static async Task<IResult> GetPublishedPosts(PostsService postsService)
+    internal static async Task<IResult> GetPublishedPosts(PostsService postsService)
     {
         var posts = await postsService.GetPublishedPostsAsync();
         return TypedResults.Ok(posts);
     }
 
-    public static async Task<IResult> GetPostBySlug(string slug, PostsService postsService)
+    internal static async Task<IResult> GetPostBySlug(string slug, PostsService postsService)
     {
         var post = await postsService.GetPostBySlugAsync(slug);
         return post is null ? TypedResults.NotFound() : TypedResults.Ok(post);

@@ -72,4 +72,97 @@ public class PostsServiceTests
 
         Assert.Null(result);
     }
+
+    [Fact]
+    public async Task CreatePostAsync_GeneratesSlugAndSetsServerTimestamps()
+    {
+        await using var db = CreateDbContext();
+        var service = new PostsService(db);
+        var authorId = Guid.NewGuid();
+        var request = new CreatePostRequest("Nowa aktualność", "<p>Treść</p>", null);
+
+        var result = await service.CreatePostAsync(request, authorId);
+
+        Assert.Equal("nowa-aktualnosc", result.Slug);
+        Assert.True((DateTime.UtcNow - result.CreatedAt).TotalSeconds < 5);
+        Assert.Equal(result.CreatedAt, result.UpdatedAt);
+    }
+
+    [Fact]
+    public async Task CreatePostAsync_AppendsSuffixWhenSlugAlreadyExists()
+    {
+        await using var db = CreateDbContext();
+        db.Posts.Add(SamplePost("Nowa aktualność"));
+        await db.SaveChangesAsync();
+        var service = new PostsService(db);
+
+        var result = await service.CreatePostAsync(
+            new CreatePostRequest("Nowa aktualność", "<p>Inna treść</p>", null), Guid.NewGuid());
+
+        Assert.Equal("nowa-aktualnosc-2", result.Slug);
+    }
+
+    [Fact]
+    public async Task UpdatePostAsync_ChangesContentButKeepsOriginalSlug()
+    {
+        await using var db = CreateDbContext();
+        var post = SamplePost("Tytuł początkowy");
+        db.Posts.Add(post);
+        await db.SaveChangesAsync();
+        var service = new PostsService(db);
+
+        var result = await service.UpdatePostAsync(
+            post.Id, new UpdatePostRequest("Zupełnie inny tytuł", "<p>Nowa treść</p>", null));
+
+        Assert.NotNull(result);
+        Assert.Equal("Zupełnie inny tytuł", result!.Title);
+        Assert.Equal(post.Slug, result.Slug);
+        Assert.True(result.UpdatedAt > post.CreatedAt);
+    }
+
+    [Fact]
+    public async Task UpdatePostAsync_ReturnsNullWhenPostDoesNotExist()
+    {
+        await using var db = CreateDbContext();
+        var service = new PostsService(db);
+
+        var result = await service.UpdatePostAsync(Guid.NewGuid(), new UpdatePostRequest("X", "<p>Y</p>", null));
+
+        Assert.Null(result);
+    }
+
+    [Fact]
+    public async Task DeletePostAsync_RemovesPostAndReturnsTrue()
+    {
+        await using var db = CreateDbContext();
+        var post = SamplePost();
+        db.Posts.Add(post);
+        await db.SaveChangesAsync();
+        var service = new PostsService(db);
+
+        var deleted = await service.DeletePostAsync(post.Id);
+
+        Assert.True(deleted);
+        Assert.Empty(await db.Posts.ToListAsync());
+    }
+
+    [Fact]
+    public async Task DeletePostAsync_ReturnsFalseWhenPostDoesNotExist()
+    {
+        await using var db = CreateDbContext();
+        var service = new PostsService(db);
+
+        Assert.False(await service.DeletePostAsync(Guid.NewGuid()));
+    }
+
+    [Fact]
+    public async Task GetAdminPostsAsync_ReturnsAllPostsRegardlessOfAge()
+    {
+        await using var db = CreateDbContext();
+        db.Posts.AddRange(SamplePost("A"), SamplePost("B"));
+        await db.SaveChangesAsync();
+        var service = new PostsService(db);
+
+        Assert.Equal(2, (await service.GetAdminPostsAsync()).Count);
+    }
 }

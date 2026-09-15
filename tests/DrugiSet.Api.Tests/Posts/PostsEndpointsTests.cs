@@ -1,11 +1,16 @@
 using System;
 using System.IdentityModel.Tokens.Jwt;
+using System.IO;
 using System.Security.Claims;
 using System.Threading.Tasks;
 using DrugiSet.Api.Data;
 using DrugiSet.Api.Posts;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
+using SixLabors.ImageSharp;
+using SixLabors.ImageSharp.PixelFormats;
 using Xunit;
 
 namespace DrugiSet.Api.Tests.Posts;
@@ -139,5 +144,51 @@ public class PostsEndpointsTests
         var result = await PostsEndpoints.GetAdminPost(created.Id, service);
 
         Assert.IsType<Ok<PostDetailDto>>(result);
+    }
+
+    [Fact]
+    public async Task UploadImage_ReturnsOkWithUrlForValidImage()
+    {
+        var tempDir = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString());
+        try
+        {
+            var configuration = new ConfigurationBuilder()
+                .AddInMemoryCollection(new Dictionary<string, string?> { ["Uploads:Path"] = tempDir })
+                .Build();
+            var imageService = new ImageUploadService(configuration);
+            using var image = new Image<Rgba32>(100, 100);
+            var stream = new MemoryStream();
+            image.SaveAsPng(stream);
+            stream.Position = 0;
+            var file = new FormFile(stream, 0, stream.Length, "file", "test.png") { Headers = new HeaderDictionary(), ContentType = "image/png" };
+            var context = new DefaultHttpContext();
+            context.Request.Scheme = "https";
+            context.Request.Host = new HostString("api.example.com");
+
+            var result = await PostsEndpoints.UploadImage(file, context.Request, imageService);
+
+            var ok = Assert.IsType<Ok<ImageUploadResponse>>(result);
+            Assert.StartsWith("https://api.example.com/uploads/", ok.Value!.Url);
+        }
+        finally
+        {
+            if (Directory.Exists(tempDir)) Directory.Delete(tempDir, recursive: true);
+        }
+    }
+
+    [Fact]
+    public async Task UploadImage_ReturnsProblemForUnsupportedType()
+    {
+        var configuration = new ConfigurationBuilder()
+            .AddInMemoryCollection(new Dictionary<string, string?> { ["Uploads:Path"] = Path.GetTempPath() })
+            .Build();
+        var imageService = new ImageUploadService(configuration);
+        var stream = new MemoryStream(new byte[10]);
+        var file = new FormFile(stream, 0, stream.Length, "file", "test.gif") { Headers = new HeaderDictionary(), ContentType = "image/gif" };
+        var context = new DefaultHttpContext();
+
+        var result = await PostsEndpoints.UploadImage(file, context.Request, imageService);
+
+        Assert.IsType<ProblemHttpResult>(result);
     }
 }

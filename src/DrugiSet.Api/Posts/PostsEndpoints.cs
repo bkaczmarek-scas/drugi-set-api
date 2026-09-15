@@ -19,6 +19,7 @@ public static class PostsEndpoints
         admin.MapPost("/", CreatePost);
         admin.MapPut("/{id:guid}", UpdatePost);
         admin.MapDelete("/{id:guid}", DeletePost);
+        admin.MapPost("/images", UploadImage);
     }
 
     internal static async Task<IResult> GetPublishedPosts(PostsService postsService)
@@ -80,5 +81,25 @@ public static class PostsEndpoints
     {
         var deleted = await postsService.DeletePostAsync(id);
         return deleted ? TypedResults.NoContent() : TypedResults.NotFound();
+    }
+
+    internal static async Task<IResult> UploadImage(IFormFile file, HttpRequest request, ImageUploadService imageUploadService)
+    {
+        var error = imageUploadService.Validate(file);
+        if (error is not null)
+        {
+            var message = error switch
+            {
+                ImageValidationError.Empty => "Plik jest pusty.",
+                ImageValidationError.TooLarge => "Plik jest za duży (maks. 5 MB).",
+                ImageValidationError.UnsupportedType => "Dozwolone typy plików: JPEG, PNG, WebP.",
+                _ => "Nieprawidłowy plik.",
+            };
+            return TypedResults.Problem(title: message, statusCode: StatusCodes.Status400BadRequest);
+        }
+
+        var publicBaseUrl = $"{request.Scheme}://{request.Host}";
+        var url = await imageUploadService.SaveAsync(file, publicBaseUrl);
+        return TypedResults.Ok(new ImageUploadResponse(url));
     }
 }

@@ -42,3 +42,9 @@ Content-Type: application/json
 ###
 
 GET {{DrugiSet.Api_HostAddress}}/api/posts
+
+###
+
+# Upload obrazu — w VS Code REST Client zaznacz plik przez pole "Attach File"
+# albo przetestuj przez curl:
+# curl -X POST {{DrugiSet.Api_HostAddress}}/api/admin/posts/images -H "Authorization: Bearer <TOKEN>" -F "file=@/sciezka/do/zdjecia.jpg"

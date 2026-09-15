@@ -6,6 +6,7 @@ using DrugiSet.Api.Seed;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.FileProviders;
 using Microsoft.IdentityModel.Tokens;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -35,6 +36,7 @@ if (string.IsNullOrWhiteSpace(jwtSecret) || Encoding.UTF8.GetByteCount(jwtSecret
 
 builder.Services.AddSingleton<JwtTokenService>();
 builder.Services.AddScoped<PostsService>();
+builder.Services.AddSingleton<ImageUploadService>();
 
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
@@ -73,6 +75,15 @@ builder.Services.AddCors(options =>
 });
 
 var app = builder.Build();
+
+var uploadsPath = builder.Configuration["Uploads:Path"]
+    ?? throw new InvalidOperationException("Konfiguracja 'Uploads:Path' jest wymagana.");
+Directory.CreateDirectory(uploadsPath);
+app.UseStaticFiles(new StaticFileOptions
+{
+    FileProvider = new PhysicalFileProvider(uploadsPath),
+    RequestPath = "/uploads",
+});
 
 app.UseExceptionHandler();
 

@@ -78,6 +78,7 @@ public class PostsEndpointsTests
 
         var created = Assert.IsType<Created<PostDetailDto>>(result);
         Assert.Equal("Nowy wpis", created.Value!.Title);
+        Assert.Equal(authorId, db.Posts.Single().AuthorId);
     }
 
     [Fact]
@@ -185,6 +186,22 @@ public class PostsEndpointsTests
         var imageService = new ImageUploadService(configuration);
         var stream = new MemoryStream(new byte[10]);
         var file = new FormFile(stream, 0, stream.Length, "file", "test.gif") { Headers = new HeaderDictionary(), ContentType = "image/gif" };
+        var context = new DefaultHttpContext();
+
+        var result = await PostsEndpoints.UploadImage(file, context.Request, imageService);
+
+        Assert.IsType<ProblemHttpResult>(result);
+    }
+
+    [Fact]
+    public async Task UploadImage_ReturnsProblemForCorruptImage()
+    {
+        var configuration = new ConfigurationBuilder()
+            .AddInMemoryCollection(new Dictionary<string, string?> { ["Uploads:Path"] = Path.GetTempPath() })
+            .Build();
+        var imageService = new ImageUploadService(configuration);
+        var stream = new MemoryStream(new byte[] { 1, 2, 3, 4, 5 });
+        var file = new FormFile(stream, 0, stream.Length, "file", "test.png") { Headers = new HeaderDictionary(), ContentType = "image/png" };
         var context = new DefaultHttpContext();
 
         var result = await PostsEndpoints.UploadImage(file, context.Request, imageService);

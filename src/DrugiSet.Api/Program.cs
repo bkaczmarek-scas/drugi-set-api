@@ -4,6 +4,7 @@ using DrugiSet.Api.Data;
 using DrugiSet.Api.Posts;
 using DrugiSet.Api.Seed;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.FileProviders;
@@ -76,8 +77,17 @@ builder.Services.AddCors(options =>
 
 var app = builder.Build();
 
-var uploadsPath = builder.Configuration["Uploads:Path"]
-    ?? throw new InvalidOperationException("Konfiguracja 'Uploads:Path' jest wymagana.");
+app.UseForwardedHeaders(new ForwardedHeadersOptions
+{
+    ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto,
+});
+
+var uploadsPath = builder.Configuration["Uploads:Path"];
+if (string.IsNullOrWhiteSpace(uploadsPath))
+{
+    throw new InvalidOperationException("Konfiguracja 'Uploads:Path' jest wymagana.");
+}
+uploadsPath = Path.GetFullPath(uploadsPath);
 Directory.CreateDirectory(uploadsPath);
 app.UseStaticFiles(new StaticFileOptions
 {

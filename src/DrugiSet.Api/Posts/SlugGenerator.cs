@@ -23,7 +23,8 @@ public static class SlugGenerator
 
         var lowered = builder.ToString().ToLowerInvariant();
         var withDashes = Regex.Replace(lowered, "[^a-z0-9]+", "-");
-        return withDashes.Trim('-');
+        var slug = withDashes.Trim('-');
+        return string.IsNullOrEmpty(slug) ? "wpis" : slug;
     }
 
     public static string MakeUnique(string baseSlug, ISet<string> existingSlugs)

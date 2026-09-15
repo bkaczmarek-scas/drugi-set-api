@@ -19,7 +19,7 @@ public static class PostsEndpoints
         admin.MapPost("/", CreatePost);
         admin.MapPut("/{id:guid}", UpdatePost);
         admin.MapDelete("/{id:guid}", DeletePost);
-        admin.MapPost("/images", UploadImage);
+        admin.MapPost("/images", UploadImage).DisableAntiforgery();
     }
 
     internal static async Task<IResult> GetPublishedPosts(PostsService postsService)
@@ -99,7 +99,14 @@ public static class PostsEndpoints
         }
 
         var publicBaseUrl = $"{request.Scheme}://{request.Host}";
-        var url = await imageUploadService.SaveAsync(file, publicBaseUrl);
-        return TypedResults.Ok(new ImageUploadResponse(url));
+        try
+        {
+            var url = await imageUploadService.SaveAsync(file, publicBaseUrl);
+            return TypedResults.Ok(new ImageUploadResponse(url));
+        }
+        catch (InvalidImageException)
+        {
+            return TypedResults.Problem(title: "Nieprawidłowy plik obrazu.", statusCode: StatusCodes.Status400BadRequest);
+        }
     }
 }

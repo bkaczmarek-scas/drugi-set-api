@@ -12,7 +12,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace DrugiSet.Api.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20260915031758_AddPosts")]
+    [Migration("20260915101427_AddPosts")]
     partial class AddPosts
     {
         /// <inheritdoc />
@@ -111,11 +111,13 @@ namespace DrugiSet.Api.Migrations
 
                     b.Property<string>("Slug")
                         .IsRequired()
-                        .HasColumnType("text");
+                        .HasMaxLength(220)
+                        .HasColumnType("character varying(220)");
 
                     b.Property<string>("Title")
                         .IsRequired()
-                        .HasColumnType("text");
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
 
                     b.Property<DateTime>("UpdatedAt")
                         .HasColumnType("timestamp with time zone");

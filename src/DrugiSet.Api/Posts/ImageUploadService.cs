@@ -10,9 +10,17 @@ public enum ImageValidationError
     UnsupportedType,
 }
 
+public class InvalidImageException : Exception
+{
+    public InvalidImageException() : base("Nieprawidłowy plik obrazu.") { }
+}
+
 public class ImageUploadService
 {
-    private static readonly HashSet<string> AllowedContentTypes = new() { "image/jpeg", "image/png", "image/webp" };
+    private static readonly HashSet<string> AllowedContentTypes = new(StringComparer.OrdinalIgnoreCase)
+    {
+        "image/jpeg", "image/png", "image/webp",
+    };
     private const long MaxFileSizeBytes = 5 * 1024 * 1024;
     private const int MaxWidthPx = 1600;
 
@@ -20,8 +28,12 @@ public class ImageUploadService
 
     public ImageUploadService(IConfiguration configuration)
     {
-        _uploadsRootPath = configuration["Uploads:Path"]
-            ?? throw new InvalidOperationException("Konfiguracja 'Uploads:Path' jest wymagana.");
+        var uploadsPath = configuration["Uploads:Path"];
+        if (string.IsNullOrWhiteSpace(uploadsPath))
+        {
+            throw new InvalidOperationException("Konfiguracja 'Uploads:Path' jest wymagana.");
+        }
+        _uploadsRootPath = uploadsPath;
     }
 
     public ImageValidationError? Validate(IFormFile file)
@@ -35,23 +47,35 @@ public class ImageUploadService
     public async Task<string> SaveAsync(IFormFile file, string publicBaseUrl)
     {
         using var inputStream = file.OpenReadStream();
-        using var image = await Image.LoadAsync(inputStream);
 
-        if (image.Width > MaxWidthPx)
+        Image image;
+        try
         {
-            var newHeight = (int)(image.Height * (MaxWidthPx / (double)image.Width));
-            image.Mutate(x => x.Resize(MaxWidthPx, newHeight));
+            image = await Image.LoadAsync(inputStream);
+        }
+        catch (Exception ex) when (ex is not InvalidImageException)
+        {
+            throw new InvalidImageException();
         }
 
-        var now = DateTime.UtcNow;
-        var relativeDir = Path.Combine(now.Year.ToString(), now.Month.ToString("D2"));
-        var fileName = $"{Guid.NewGuid()}.webp";
-        var relativePath = Path.Combine(relativeDir, fileName);
-        var fullPath = Path.Combine(_uploadsRootPath, relativePath);
+        using (image)
+        {
+            if (image.Width > MaxWidthPx)
+            {
+                var newHeight = (int)(image.Height * (MaxWidthPx / (double)image.Width));
+                image.Mutate(x => x.Resize(MaxWidthPx, newHeight));
+            }
 
-        Directory.CreateDirectory(Path.GetDirectoryName(fullPath)!);
-        await image.SaveAsWebpAsync(fullPath);
+            var now = DateTime.UtcNow;
+            var relativeDir = Path.Combine(now.Year.ToString(), now.Month.ToString("D2"));
+            var fileName = $"{Guid.NewGuid()}.webp";
+            var relativePath = Path.Combine(relativeDir, fileName);
+            var fullPath = Path.Combine(_uploadsRootPath, relativePath);
 
-        return $"{publicBaseUrl}/uploads/{relativePath.Replace(Path.DirectorySeparatorChar, '/')}";
+            Directory.CreateDirectory(Path.GetDirectoryName(fullPath)!);
+            await image.SaveAsWebpAsync(fullPath);
+
+            return $"{publicBaseUrl}/uploads/{relativePath.Replace(Path.DirectorySeparatorChar, '/')}";
+        }
     }
 }

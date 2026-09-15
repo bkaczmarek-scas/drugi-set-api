@@ -64,4 +64,4 @@ Poniższe endpointy administracyjne wymagają `Authorization: Bearer <token>` z 
 - `POST /api/admin/posts` — `{ "title", "contentHtml", "coverImageUrl" }` → 201 z pełnym wpisem (400 gdy brak tytułu lub treści)
 - `PUT /api/admin/posts/{id}` — jw. → 200 z pełnym wpisem (400 gdy brak tytułu lub treści, 404 gdy brak wpisu)
 - `DELETE /api/admin/posts/{id}` — 204 (404 gdy brak wpisu)
-- `POST /api/admin/posts/images` — multipart/form-data, pole `file` → `{ "url" }` (400 gdy plik pusty, większy niż 5 MB, lub nieobsługiwany typ — dozwolone JPEG/PNG/WebP; obraz szerszy niż 1600px jest skalowany i zapisywany jako WebP)
+- `POST /api/admin/posts/images` — multipart/form-data, pole `file` → `{ "url" }` (400 gdy plik pusty, większy niż 5 MB, lub nieobsługiwany typ — dozwolone JPEG/PNG/WebP; obraz jest zapisywany jako WebP; obrazy szersze niż 1600px są dodatkowo skalowane z zachowaniem proporcji)
